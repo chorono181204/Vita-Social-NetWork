@@ -1,0 +1,35 @@
+import { InputType, Field } from '@nestjs/graphql';
+import { IsNotEmpty, IsString, IsOptional, IsArray } from 'class-validator';
+
+@InputType()
+export class CreatePostInput {
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  title: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  content?: string;
+
+  @Field(() => [String], { nullable: true })
+  @IsOptional()
+  @IsArray()
+  tags?: string[];
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  cuisine?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  difficulty?: string;
+} 

@@ -1,39 +1,33 @@
+import React from 'react';
 import {
   Pressable,
   PressableProps,
   Text,
   ActivityIndicator,
-  GestureResponderEvent,
-  ImageSourcePropType,
   StyleProp,
   ViewStyle,
   ImageStyle,
   TextStyle,
-  StyleSheet,
 } from 'react-native';
 import { colors } from '@/theme';
 import Image from '../Image';
 
 export interface ButtonProps extends PressableProps {
-  // Text props
   text?: string;
   textColor?: string;
   textSize?: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl';
   textWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
   
-  // Icon props
-  icon?: ImageSourcePropType;
+  icon?: any;
   iconSize?: number;
   iconColor?: string;
   iconPosition?: 'left' | 'right';
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   
-  // Size props
   width?: number | string;
   height?: number;
   
-  // Style props
   backgroundColor?: string;
   borderColor?: string;
   borderWidth?: number;
@@ -41,28 +35,24 @@ export interface ButtonProps extends PressableProps {
   roundSize?: 'sm' | 'md' | 'lg' | 'full';
   variant?: 'default' | 'icon' | 'primary' | 'secondary' | 'outline';
   
-  // State props
   isLoading?: boolean;
   disabled?: boolean;
   loadingColor?: string;
   
-  // Legacy props (for backward compatibility)
   title?: string;
   titleStyle?: StyleProp<TextStyle>;
-  image?: ImageSourcePropType;
+  image?: any;
   imageStyle?: StyleProp<ImageStyle>;
   style?: StyleProp<ViewStyle>;
   children?: React.ReactNode;
 }
 
-function Button({
-  // Text props
+export default function Button({
   text,
   textColor = colors.white,
   textSize = 'base',
   textWeight = 'medium',
   
-  // Icon props
   icon,
   iconSize = 20,
   iconColor,
@@ -70,11 +60,9 @@ function Button({
   leftIcon,
   rightIcon,
   
-  // Size props
   width,
   height = 48,
   
-  // Style props
   backgroundColor = colors.blackGray,
   borderColor,
   borderWidth = 0,
@@ -82,12 +70,10 @@ function Button({
   roundSize = 'md',
   variant = 'default',
   
-  // State props
   isLoading = false,
   disabled = false,
   loadingColor = colors.white,
   
-  // Legacy props
   title,
   titleStyle,
   image,
@@ -95,79 +81,88 @@ function Button({
   style,
   children,
   
-  ...others
+  ...pressableProps
 }: ButtonProps) {
-  // Use text prop or fallback to title for backward compatibility
   const displayText = text || title;
-  
-  // Use icon prop or fallback to image for backward compatibility
   const displayIcon = icon || image;
   
-  // Get text size value
   const getTextSize = () => {
-    switch (textSize) {
-      case 'xs': return 12;
-      case 'sm': return 14;
-      case 'base': return 16;
-      case 'lg': return 18;
-      case 'xl': return 20;
-      case '2xl': return 24;
-      default: return 16;
-    }
+    const sizes = {
+      xs: 12,
+      sm: 14,
+      base: 16,
+      lg: 18,
+      xl: 20,
+      '2xl': 24,
+    };
+    return sizes[textSize] || 16;
   };
   
-  // Get font weight value
   const getFontWeight = () => {
-    switch (textWeight) {
-      case 'normal': return 'normal';
-      case 'medium': return '500';
-      case 'semibold': return '600';
-      case 'bold': return 'bold';
-      default: return '500';
-    }
+    const weights: Record<string, any> = {
+      normal: 'normal',
+      medium: '500',
+      semibold: '600',
+      bold: 'bold',
+    };
+    return weights[textWeight] || '500';
   };
   
-  // Get border radius value
   const getBorderRadius = () => {
-    if (round) return height / 2;
-    if (variant === 'icon') return height / 2;
+    if (round || variant === 'icon') return height / 2;
     
-    switch (roundSize) {
-      case 'sm': return 4;
-      case 'md': return 8;
-      case 'lg': return 12;
-      case 'full': return height / 2;
-      default: return 8;
-    }
+    const radiusSizes = {
+      sm: 4,
+      md: 8,
+      lg: 12,
+      full: height / 2,
+    };
+    return radiusSizes[roundSize] || 8;
   };
 
-  // Get variant styles
   const getVariantStyles = () => {
-    switch (variant) {
-      case 'icon':
-        return {
-          width: height,
-          height: height,
-          backgroundColor: colors.transparent,
-          padding: 8,
-        };
-      case 'primary':
-        return {
-          backgroundColor: colors.green,
-        };
-      case 'secondary':
-        return {
-          backgroundColor: colors.lightGrayPurple,
-        };
-      case 'outline':
-        return {
-          backgroundColor: colors.transparent,
-          borderColor: colors.gray,
-          borderWidth: 1,
-        };
-      default:
-        return {};
+    const variants = {
+      icon: {
+        width: height,
+        height: height,
+        backgroundColor: colors.transparent,
+        padding: 8,
+      },
+      primary: {
+        backgroundColor: colors.green,
+      },
+      secondary: {
+        backgroundColor: colors.lightGrayPurple,
+      },
+      outline: {
+        backgroundColor: colors.transparent,
+        borderColor: colors.gray,
+        borderWidth: 1,
+      },
+      default: {},
+    };
+    return variants[variant] || {};
+  };
+
+  const renderIcon = (position: 'left' | 'right') => {
+    if (position === 'left' && leftIcon) return leftIcon;
+    if (position === 'right' && rightIcon) return rightIcon;
+    if (displayIcon && iconPosition === position) {
+      return (
+        <Image 
+          source={displayIcon} 
+          style={[
+            { 
+              width: iconSize, 
+              height: iconSize,
+              tintColor: iconColor || textColor 
+            },
+            imageStyle
+          ]} 
+        />
+      );
     }
+    return null;
   };
 
   return (
@@ -190,27 +185,15 @@ function Button({
         style
       ]}
       disabled={disabled || isLoading}
-      {...others}>
+      {...pressableProps}
+    >
       {children}
       
       {isLoading && (
         <ActivityIndicator size="small" color={loadingColor} />
       )}
       
-      {!isLoading && leftIcon}
-      {!isLoading && !leftIcon && displayIcon && iconPosition === 'left' && (
-        <Image 
-          source={displayIcon} 
-          style={[
-            { 
-              width: iconSize, 
-              height: iconSize,
-              tintColor: iconColor || textColor 
-            },
-            imageStyle
-          ]} 
-        />
-      )}
+      {!isLoading && renderIcon('left')}
       
       {!isLoading && displayText && (
         <Text 
@@ -227,22 +210,7 @@ function Button({
         </Text>
       )}
       
-      {!isLoading && rightIcon}
-      {!isLoading && !rightIcon && displayIcon && iconPosition === 'right' && (
-        <Image 
-          source={displayIcon} 
-          style={[
-            { 
-              width: iconSize, 
-              height: iconSize,
-              tintColor: iconColor || textColor 
-            },
-            imageStyle
-          ]} 
-        />
-      )}
+      {!isLoading && renderIcon('right')}
     </Pressable>
   );
 }
-
-export default Button;

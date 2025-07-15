@@ -9,6 +9,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
+import { colors } from '@/theme';
 
 export interface InputProps extends Omit<TextInputProps, 'style'> {
   placeholder?: string;
@@ -27,12 +28,12 @@ export interface InputProps extends Omit<TextInputProps, 'style'> {
   required?: boolean;
 }
 
-const Input: React.FC<InputProps> = ({
+export default function Input({
   placeholder,
-  borderColor = '#E5E7EB',
-  textColor = '#1F2937',
-  backgroundColor = '#FFFFFF',
-  focusBorderColor = '#22C55E',
+  borderColor = colors.gray,
+  textColor = colors.blackGray,
+  backgroundColor = colors.white,
+  focusBorderColor = colors.green,
   focusBackgroundColor,
   focusTextColor,
   error,
@@ -41,10 +42,11 @@ const Input: React.FC<InputProps> = ({
   inputStyle,
   labelStyle,
   errorStyle,
+  required,
   onFocus,
   onBlur,
-  ...props
-}) => {
+  ...textInputProps
+}: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
 
   const handleFocus = (e: any) => {
@@ -57,37 +59,44 @@ const Input: React.FC<InputProps> = ({
     onBlur?.(e);
   };
 
-  const currentBorderColor = isFocused ? focusBorderColor : borderColor;
-  const currentBackgroundColor = isFocused && focusBackgroundColor 
-    ? focusBackgroundColor 
-    : backgroundColor;
-  const currentTextColor = isFocused && focusTextColor 
-    ? focusTextColor 
-    : textColor;
+  const getCurrentStyles = () => {
+    const currentBorderColor = isFocused ? focusBorderColor : borderColor;
+    const currentBackgroundColor = isFocused && focusBackgroundColor 
+      ? focusBackgroundColor 
+      : backgroundColor;
+    const currentTextColor = isFocused && focusTextColor 
+      ? focusTextColor 
+      : textColor;
+
+    return {
+      borderColor: currentBorderColor,
+      backgroundColor: currentBackgroundColor,
+      color: currentTextColor,
+    };
+  };
 
   return (
     <View style={[styles.container, containerStyle]}>
       {label && (
         <Text style={[styles.label, labelStyle]}>
           {label}
+          {required && <Text style={styles.required}> *</Text>}
         </Text>
       )}
+      
       <TextInput
         style={[
           styles.input,
-          {
-            borderColor: currentBorderColor,
-            backgroundColor: currentBackgroundColor,
-            color: currentTextColor,
-          },
+          getCurrentStyles(),
           inputStyle,
         ]}
         placeholder={placeholder}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={colors.gray}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        {...props}
+        {...textInputProps}
       />
+      
       {error && (
         <Text style={[styles.error, errorStyle]}>
           {error}
@@ -95,7 +104,7 @@ const Input: React.FC<InputProps> = ({
       )}
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -105,8 +114,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#374151',
+    color: colors.blackGray,
     marginBottom: 8,
+  },
+  required: {
+    color: colors.red,
   },
   input: {
     height: 48,
@@ -118,10 +130,8 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: 12,
-    color: '#EF4444',
+    color: colors.red,
     marginTop: 4,
     marginLeft: 4,
   },
-});
-
-export default Input; 
+}); 

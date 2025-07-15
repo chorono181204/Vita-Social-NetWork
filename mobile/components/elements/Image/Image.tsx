@@ -1,3 +1,4 @@
+import React from 'react';
 import { Image as ExpoImage, ImageContentFit, ImageProps as ExpoImageProps } from 'expo-image';
 import { StyleProp, ImageStyle, ImageSourcePropType } from 'react-native';
 
@@ -10,10 +11,16 @@ export interface ImageProps extends Omit<ExpoImageProps, 'source' | 'placeholder
   onTouchStart?: () => void;
 }
 
-function Image({ transition, contentFit, ...others }: ImageProps) {
+export default function Image({
+  transition = 0,
+  contentFit = 'contain',
+  ...imageProps
+}: ImageProps) {
   return (
-    <ExpoImage transition={transition ?? 0} contentFit={contentFit ?? 'contain'} {...others} />
+    <ExpoImage
+      transition={transition}
+      contentFit={contentFit}
+      {...imageProps}
+    />
   );
 }
-
-export default Image;

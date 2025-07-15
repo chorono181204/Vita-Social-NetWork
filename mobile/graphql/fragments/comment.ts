@@ -1,38 +1,40 @@
 import { gql } from '@apollo/client';
-import { USER_FRAGMENT } from './user';
 
 export const COMMENT_FRAGMENT = gql`
   fragment CommentFields on Comment {
     id
     content
+    authorId
+    postId
+    parentId
+    likesCount
+    repliesCount
+    isLiked
     createdAt
     updatedAt
-    user {
-      ...UserFields
-    }
-    parent {
+    author {
       id
-      content
-      user {
-        id
-        username
-      }
+      name
+      email
+      avatar
     }
     replies {
       id
       content
+      authorId
+      postId
+      parentId
+      likesCount
+      repliesCount
+      isLiked
       createdAt
-      user {
+      updatedAt
+      author {
         id
-        username
-        displayName
+        name
+        email
         avatar
       }
-      likes
-      isLiked
     }
-    likes
-    isLiked
   }
-  ${USER_FRAGMENT}
 `; 

@@ -1,9 +1,16 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/theme';
 import { capitalizeEachWord } from '@/utils/format';
-import MainLayout from '@/components/layouts/Main/MainLayout';
+import Button from '@/components/elements/Button';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import BasicInfoSection from '@/components/elements/Profile/BasicInfoSection';
+import TagSection from '@/components/elements/Profile/TagSection';
+import ContactInfoSection from '@/components/elements/Profile/ContactInfoSection';
+import BioSection from '@/components/elements/Profile/BioSection';
+import ModalsSection from '@/components/elements/Profile/ModalsSection';
+import { updateUserProfile, UpdateUserData } from '@/services/user.service';
 
 interface ProfileAboutProps {
   userInfo: {
@@ -23,13 +30,28 @@ interface ProfileAboutProps {
   };
   isOwnProfile: boolean;
   onEditPress?: () => void;
+  isEditing?: boolean;
+  onSave?: () => void;
+  onCancel?: () => void;
 }
 
 export default function ProfileAbout({
   userInfo,
   isOwnProfile,
-  onEditPress
+  onEditPress,
+  isEditing = false,
+  onSave,
+  onCancel
 }: ProfileAboutProps) {
+  const [editInfo, setEditInfo] = useState<ProfileAboutProps['userInfo']>(userInfo);
+  const [showGenderModal, setShowGenderModal] = useState(false);
+  const [showCookingLevelModal, setShowCookingLevelModal] = useState(false);
+  const [showBirthdayPicker, setShowBirthdayPicker] = useState(false);
+  const [cuisineTagInput, setCuisineTagInput] = useState('');
+  const [healthTagInput, setHealthTagInput] = useState('');
+  const [allergyTagInput, setAllergyTagInput] = useState('');
+  const [interestTagInput, setInterestTagInput] = useState('');
+  const [bio, setBio] = useState(editInfo.bio || '');
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -40,138 +62,161 @@ export default function ProfileAbout({
     });
   };
 
-  const renderInfoItem = (
-    icon: keyof typeof Ionicons.glyphMap,
-    label: string,
-    value: string | undefined,
-    isLink: boolean = false,
-    customIcon?: React.ReactNode
-  ) => {
-    if (!value) return null;
+  const handleSave = async () => {
+    try {
+      const updateData: UpdateUserData = {
+        bio: bio,
+        location: editInfo.location,
+        website: editInfo.website,
+        phone: editInfo.phone,
+        dateOfBirth: editInfo.birthday ? new Date(editInfo.birthday) : undefined,
+        gender: editInfo.gender as any,
+        dietaryPreferences: editInfo.interests,
+        cuisinePreferences: editInfo.cuisinePreferences,
+        cookingLevel: editInfo.cookingLevel as any,
+        healthGoals: editInfo.healthGoals,
+        allergies: editInfo.allergies,
+      };
 
-    return (
-      <View style={styles.infoItem}>
-        <View style={styles.infoIcon}>
-          {customIcon ? customIcon : <Ionicons name={icon} size={20} color={colors.green} />}
-        </View>
-        <View style={styles.infoContent}>
-          <Text style={styles.infoLabel}>{label}</Text>
-          <Text style={[styles.infoValue, isLink && styles.linkText]}>
-            {value}
-          </Text>
-        </View>
-      </View>
-    );
+      await updateUserProfile(updateData);
+      setEditInfo(prev => ({ ...prev, bio }));
+      onSave?.();
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+    }
   };
 
-  const renderInterests = () => {
-    if (!userInfo.interests || userInfo.interests.length === 0) return null;
+  const handleAddTag = (key: keyof ProfileAboutProps['userInfo'], value: string) => {
+    if (!value.trim()) return;
+    setEditInfo(prev => ({
+      ...prev,
+      [key]: [...(prev[key] as string[] || []), value.trim()]
+    }));
+  };
 
-    return (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Interests</Text>
-        <View style={styles.tagsContainer}>
-          {userInfo.interests.map((interest, index) => (
-            <View key={index} style={styles.tag}>
-              <Text style={styles.tagText}>{interest}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-    );
+  const handleRemoveTag = (key: keyof ProfileAboutProps['userInfo'], idx: number) => {
+    setEditInfo(prev => ({
+      ...prev,
+      [key]: (prev[key] as string[]).filter((_, i) => i !== idx)
+    }));
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Edit Button */}
-      {isOwnProfile && (
-        <TouchableOpacity style={styles.editButton} onPress={onEditPress}>
-          <Ionicons name="create-outline" size={20} color={colors.green} />
-          <Text style={styles.editButtonText}>Edit Info</Text>
-        </TouchableOpacity>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ paddingBottom: 40 }}
+    >
+      <BioSection
+        bio={bio}
+        isEditing={isEditing}
+        setBio={setBio}
+        styles={styles}
+      />
+      
+      <BasicInfoSection
+        editInfo={editInfo}
+        isEditing={isEditing}
+        setEditInfo={setEditInfo}
+        showGenderModal={showGenderModal}
+        setShowGenderModal={setShowGenderModal}
+        showBirthdayPicker={showBirthdayPicker}
+        setShowBirthdayPicker={setShowBirthdayPicker}
+        showCookingLevelModal={showCookingLevelModal}
+        setShowCookingLevelModal={setShowCookingLevelModal}
+        styles={styles}
+      />
+      
+      {typeof editInfo.cuisinePreferences !== 'undefined' && (
+        <TagSection
+          title="Cuisine Preferences"
+          tags={editInfo.cuisinePreferences}
+          isEditing={isEditing}
+          tagInput={cuisineTagInput}
+          setTagInput={setCuisineTagInput}
+          onAddTag={(val: string) => handleAddTag('cuisinePreferences', val)}
+          onRemoveTag={(idx: number) => handleRemoveTag('cuisinePreferences', idx)}
+          styles={styles}
+        />
       )}
-
-      {/* Bio Section */}
-      {userInfo.bio && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
-          <Text style={styles.bioText}>{userInfo.bio}</Text>
+      
+      {typeof editInfo.healthGoals !== 'undefined' && (
+        <TagSection
+          title="Health Goals"
+          tags={editInfo.healthGoals}
+          isEditing={isEditing}
+          tagInput={healthTagInput}
+          setTagInput={setHealthTagInput}
+          onAddTag={(val: string) => handleAddTag('healthGoals', val)}
+          onRemoveTag={(idx: number) => handleRemoveTag('healthGoals', idx)}
+          styles={styles}
+        />
+      )}
+      
+      {typeof editInfo.allergies !== 'undefined' && (
+        <TagSection
+          title="Allergies"
+          tags={editInfo.allergies}
+          isEditing={isEditing}
+          tagInput={allergyTagInput}
+          setTagInput={setAllergyTagInput}
+          onAddTag={(val: string) => handleAddTag('allergies', val)}
+          onRemoveTag={(idx: number) => handleRemoveTag('allergies', idx)}
+          styles={styles}
+        />
+      )}
+      
+      {typeof editInfo.interests !== 'undefined' && (
+        <TagSection
+          title="Interests"
+          tags={editInfo.interests}
+          isEditing={isEditing}
+          tagInput={interestTagInput}
+          setTagInput={setInterestTagInput}
+          onAddTag={(val: string) => handleAddTag('interests', val)}
+          onRemoveTag={(idx: number) => handleRemoveTag('interests', idx)}
+          styles={styles}
+        />
+      )}
+      
+      {(editInfo.email || editInfo.phone || editInfo.website) && (
+        <ContactInfoSection
+          editInfo={editInfo}
+          isEditing={isEditing}
+          setEditInfo={setEditInfo}
+          styles={styles}
+        />
+      )}
+      
+      {isEditing && (
+        <View style={styles.actionButtons}>
+          <Button
+            text="Save"
+            backgroundColor={colors.green}
+            textColor={colors.white}
+            style={styles.actionButton}
+            onPress={handleSave}
+          />
+          <Button
+            text="Cancel"
+            backgroundColor={colors.lightGray}
+            textColor={colors.gray}
+            style={styles.actionButton}
+            onPress={onCancel}
+          />
         </View>
       )}
-
-      {/* Basic Info */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Basic Info</Text>
-        {renderInfoItem('location-outline', 'Location', userInfo.location)}
-        {renderInfoItem('person-outline', 'Gender', capitalizeEachWord(userInfo.gender?.toLowerCase().replace(/_/g, ' ') || ''), false,
-          userInfo.gender === 'MALE' ? <Ionicons name="male" size={20} color={colors.blue} /> :
-          userInfo.gender === 'FEMALE' ? <Ionicons name="female" size={20} color={colors.pink} /> :
-          userInfo.gender === 'OTHER' ? <Ionicons name="transgender" size={20} color={colors.purple} /> : undefined
-        )}
-        {renderInfoItem('calendar-outline', 'Birthday', userInfo.birthday ? formatDate(userInfo.birthday) : undefined)}
-        {renderInfoItem('time-outline', 'Joined', userInfo.joinDate ? formatDate(userInfo.joinDate) : undefined)}
-        {renderInfoItem('flame-outline', 'Cooking Level', capitalizeEachWord(userInfo.cookingLevel?.toLowerCase().replace(/_/g, ' ') || ''), false,
-          userInfo.cookingLevel === 'BEGINNER' ? <Ionicons name="leaf" size={20} color={colors.green} /> :
-          userInfo.cookingLevel === 'INTERMEDIATE' ? <Ionicons name="trending-up" size={20} color={colors.orange} /> :
-          userInfo.cookingLevel === 'ADVANCED' ? <Ionicons name="star" size={20} color={'#FFD700'} /> :
-          userInfo.cookingLevel === 'EXPERT' ? <Ionicons name="trophy" size={20} color={colors.red} /> : undefined
-        )}
-      </View>
-
-      {/* Cuisine Preferences */}
-      {userInfo.cuisinePreferences && userInfo.cuisinePreferences.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Cuisine Preferences</Text>
-          <View style={styles.tagsContainer}>
-            {userInfo.cuisinePreferences.map((cuisine, idx) => (
-              <View key={idx} style={styles.tag}>
-                <Text style={styles.tagText}>{cuisine}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {/* Health Goals */}
-      {userInfo.healthGoals && userInfo.healthGoals.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Health Goals</Text>
-          <View style={styles.tagsContainer}>
-            {userInfo.healthGoals.map((goal, idx) => (
-              <View key={idx} style={styles.tag}>
-                <Text style={styles.tagText}>{goal}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {/* Allergies */}
-      {userInfo.allergies && userInfo.allergies.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Allergies</Text>
-          <View style={styles.tagsContainer}>
-            {userInfo.allergies.map((allergy, idx) => (
-              <View key={idx} style={styles.tag}>
-                <Text style={styles.tagText}>{allergy}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {/* Contact Info */}
-      {(userInfo.email || userInfo.phone || userInfo.website) && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Info</Text>
-          {renderInfoItem('mail-outline', 'Email', userInfo.email, true)}
-          {renderInfoItem('call-outline', 'Phone', userInfo.phone, true)}
-          {renderInfoItem('globe-outline', 'Website', userInfo.website, true)}
-        </View>
-      )}
-
-      {/* Interests */}
-      {renderInterests()}
+      
+      <ModalsSection
+        showGenderModal={showGenderModal}
+        setShowGenderModal={setShowGenderModal}
+        showCookingLevelModal={showCookingLevelModal}
+        setShowCookingLevelModal={setShowCookingLevelModal}
+        editInfo={editInfo}
+        setEditInfo={setEditInfo}
+        styles={styles}
+      />
     </ScrollView>
   );
 }
@@ -181,22 +226,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.white,
   },
-  editButton: {
+  actionButtons: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.lightGreen,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 24,
-    marginHorizontal: 20,
-    marginTop: 20,
+    gap: 16,
+    margin: 20,
   },
-  editButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.green,
+  actionButton: {
+    flex: 1,
   },
   section: {
     marginTop: 24,
@@ -275,5 +311,38 @@ const styles = StyleSheet.create({
   goalText: {
     fontSize: 16,
     color: colors.blackGray,
+  },
+  input: {
+    fontSize: 16,
+    color: colors.blackGray,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray,
+    paddingVertical: 4,
+  },
+  selectField: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray,
+    paddingVertical: 8,
+  },
+  tagsEditContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+  },
+  tagInput: {
+    minWidth: 60,
+    fontSize: 14,
+    color: colors.green,
+    backgroundColor: colors.lightGreen,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
 }); 

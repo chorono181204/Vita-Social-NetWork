@@ -12,19 +12,19 @@ export interface HeaderButton {
   style?: 'default' | 'primary' | 'secondary';
 }
 
-export interface DynamicHeaderProps {
+export interface HeaderProps {
   variant?: 'default' | 'search' | 'profile' | 'minimal' | 'center-logo';
   title?: string;
   subtitle?: string;
   leftButton?: HeaderButton;
   rightButton?: HeaderButton;
-  rightButtons?: HeaderButton[]; // Multiple buttons
+  rightButtons?: HeaderButton[];
   showBackButton?: boolean;
   backgroundColor?: string;
   showLogo?: boolean;
   centerTitle?: boolean;
-  titleAlignLeft?: boolean; // Align title với content padding
-  contentPadding?: number; // Custom padding cho title
+  titleAlignLeft?: boolean;
+  contentPadding?: number;
   onBackPress?: () => void;
 }
 
@@ -42,7 +42,7 @@ export default function Header({
   titleAlignLeft = false,
   contentPadding = 0,
   onBackPress,
-}: DynamicHeaderProps) {
+}: HeaderProps) {
   const insets = useSafeAreaInsets();
 
   const renderLeftContent = () => {
@@ -50,7 +50,7 @@ export default function Header({
       return (
         <TouchableOpacity 
           style={styles.actionButton} 
-          onPress={onBackPress || (() => console.log('Back pressed'))}
+          onPress={onBackPress}
         >
           <Ionicons name="arrow-back" size={sizing.iconMd} color={colors.blackGray} />
         </TouchableOpacity>
@@ -70,10 +70,9 @@ export default function Header({
       );
     }
 
-    // Default menu for certain variants
     if (variant === 'default' || variant === 'center-logo') {
       return (
-        <TouchableOpacity style={styles.actionButton} onPress={() => console.log('Menu pressed')}>
+        <TouchableOpacity style={styles.actionButton}>
           <Ionicons name="menu" size={sizing.iconMd} color={colors.blackGray} />
         </TouchableOpacity>
       );
@@ -95,8 +94,6 @@ export default function Header({
       return <View style={styles.centerContainer} />;
     }
 
-    // Custom styling cho title align left  
-    // Để align với khối bọc ngoài: contentPadding - header padding
     const titleContainerStyle = [
       styles.centerContainer,
       centerTitle && styles.centerAligned,
@@ -132,10 +129,9 @@ export default function Header({
     const buttons = rightButtons || (rightButton ? [rightButton] : []);
     
     if (buttons.length === 0) {
-      // Default search for certain variants
       if (variant === 'default' || variant === 'center-logo') {
         return (
-          <TouchableOpacity style={styles.actionButton} onPress={() => console.log('Search pressed')}>
+          <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="search" size={sizing.iconMd} color={colors.blackGray} />
           </TouchableOpacity>
         );

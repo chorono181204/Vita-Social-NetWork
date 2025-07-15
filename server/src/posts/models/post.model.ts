@@ -13,6 +13,33 @@ export class Post extends BaseModel {
   @Field(() => Boolean)
   published: boolean;
 
+  @Field(() => String, { nullable: true })
+  category?: string | null;
+
+  @Field(() => String, { nullable: true })
+  cuisine?: string | null;
+
+  @Field(() => String, { nullable: true })
+  difficulty?: string | null;
+
+  @Field(() => [String])
+  tags: string[];
+
+  @Field(() => String, { nullable: true })
+  searchText?: string | null;
+
+  @Field(() => String)
+  authorId: string;
+
   @Field(() => User, { nullable: true })
   author?: User | null;
+
+  @Field(() => Number, { defaultValue: 0 })
+  likesCount: number;
+
+  @Field(() => Number, { defaultValue: 0 })
+  commentsCount: number;
+
+  @Field(() => Number, { defaultValue: 0 })
+  savesCount: number;
 }

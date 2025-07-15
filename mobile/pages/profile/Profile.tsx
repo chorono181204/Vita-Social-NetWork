@@ -28,6 +28,7 @@ interface ProfileProps {
 export default function Profile() {
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('posts');
+  const [isEditing, setIsEditing] = useState(false); // Thêm state này
   const loading = !user;
 
   useEffect(() => {
@@ -36,9 +37,14 @@ export default function Profile() {
 
   const profile = user?.profile;
 
+  // Hàm bật chế độ edit
+  const handleEditProfile = () => setIsEditing(true);
+  // Hàm tắt chế độ edit (có thể truyền xuống cho nút Save)
+  const handleSaveProfile = () => setIsEditing(false);
+
   return (
     <MainLayout headerProps={{ title: 'Profile' }} loading={loading}>
-      {user && (
+      {user ? (
         activeTab === 'posts' ? (
           <FlatList
             data={[]}
@@ -53,6 +59,7 @@ export default function Profile() {
                   username={user.username || ''}
                   bio={profile?.bio || ''}
                   isOwnProfile={true}
+                  onEditProfile={handleEditProfile}
                 />
                 <ProfileStats
                   postsCount={profile?.postsCount || 0}
@@ -81,6 +88,7 @@ export default function Profile() {
               username={user.username || ''}
               bio={profile?.bio || ''}
               isOwnProfile={true}
+              onEditProfile={handleEditProfile}
             />
             <ProfileStats
               postsCount={profile?.postsCount || 0}
@@ -112,10 +120,13 @@ export default function Profile() {
                 gender: profile?.gender || '',
               }}
               isOwnProfile={true}
+              isEditing={isEditing}
+              onSave={handleSaveProfile}
+              onCancel={() => setIsEditing(false)}
             />
           </ScrollView>
         )
-      )}
+      ) : null}
     </MainLayout>
   );
 }
