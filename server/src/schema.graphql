@@ -1,0 +1,209 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Auth {
+  """JWT access token"""
+  accessToken: JWT!
+
+  """JWT refresh token"""
+  refreshToken: JWT!
+}
+
+input ChangePasswordInput {
+  newPassword: String!
+  oldPassword: String!
+}
+
+"""User cooking level"""
+enum CookingLevel {
+  ADVANCED
+  BEGINNER
+  EXPERT
+  INTERMEDIATE
+}
+
+input CreatePostInput {
+  content: String!
+  title: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+"""User gender"""
+enum Gender {
+  FEMALE
+  MALE
+  OTHER
+}
+
+"""
+A field whose value is a JSON Web Token (JWT): https://jwt.io/introduction.
+"""
+scalar JWT
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type Mutation {
+  changePassword(data: ChangePasswordInput!): User!
+  createPost(data: CreatePostInput!): Post!
+  login(data: LoginInput!): Auth!
+  refreshToken(token: JWT!): Token!
+  signup(data: SignupInput!): Auth!
+  updateUser(data: UpdateUserInput!): UserProfile!
+}
+
+"""
+Possible directions in which to order a list of items when provided an `orderBy` argument.
+"""
+enum OrderDirection {
+  asc
+  desc
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+}
+
+type Post {
+  author: User
+  content: String
+
+  """Identifies the date and time when the object was created."""
+  createdAt: DateTime!
+  id: ID!
+  published: Boolean!
+  title: String!
+
+  """Identifies the date and time when the object was last updated."""
+  updatedAt: DateTime!
+}
+
+type PostConnection {
+  edges: [PostEdge!]
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type PostEdge {
+  cursor: String!
+  node: Post!
+}
+
+input PostOrder {
+  direction: OrderDirection!
+  field: PostOrderField!
+}
+
+"""Properties by which post connections can be ordered."""
+enum PostOrderField {
+  content
+  createdAt
+  id
+  published
+  title
+  updatedAt
+}
+
+type Query {
+  hello(name: String!): String!
+  helloWorld: String!
+  me: User!
+  post: Post!
+  publishedPosts(orderBy: PostOrder, query: String): PostConnection!
+  userPosts: [Post!]!
+}
+
+"""User role"""
+enum Role {
+  ADMIN
+  CHEF
+  USER
+}
+
+input SignupInput {
+  displayName: String
+  email: String!
+  password: String!
+  username: String!
+}
+
+type Subscription {
+  postCreated: Post!
+}
+
+type Token {
+  """JWT access token"""
+  accessToken: JWT!
+
+  """JWT refresh token"""
+  refreshToken: JWT!
+}
+
+input UpdateUserInput {
+  allergies: [String!]
+  avatar: String
+  bio: String
+  cookingLevel: CookingLevel
+  cuisinePreferences: [String!]
+  dateOfBirth: DateTime
+  dietaryPreferences: [String!]
+  displayName: String
+  gender: Gender
+  healthGoals: [String!]
+  location: String
+  phone: String
+  website: String
+}
+
+type User {
+  """Identifies the date and time when the object was created."""
+  createdAt: DateTime!
+  email: String!
+  id: ID!
+  isActive: Boolean!
+  isVerified: Boolean!
+  posts: [Post!]
+  profile: UserProfile
+  role: Role!
+
+  """Identifies the date and time when the object was last updated."""
+  updatedAt: DateTime!
+  username: String!
+}
+
+type UserProfile {
+  allergies: [String!]!
+  avatar: String
+  bio: String
+  cookingLevel: CookingLevel
+
+  """Identifies the date and time when the object was created."""
+  createdAt: DateTime!
+  cuisinePreferences: [String!]!
+  dateOfBirth: DateTime
+  dietaryPreferences: [String!]!
+  displayName: String
+  followersCount: Int!
+  followingCount: Int!
+  gender: Gender
+  healthGoals: [String!]!
+  id: ID!
+  location: String
+  phone: String
+  postsCount: Int!
+
+  """Identifies the date and time when the object was last updated."""
+  updatedAt: DateTime!
+  userId: String!
+  website: String
+}

@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Vita",
+    "slug": "vita-health-app",
+    "version": "3.0.0",
+    "owner": "wataru",
+    "newArchEnabled": true,
+    "platforms": ["ios", "android", "web"],
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo-sm.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "favicon": "./assets/images/logo-sm.png"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    }
+  }
+}

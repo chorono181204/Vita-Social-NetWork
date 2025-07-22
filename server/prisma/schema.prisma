@@ -1,0 +1,229 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  // previewFeatures = []
+}
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Authentication fields only
+  email         String    @unique
+  username      String    @unique
+  password      String
+  role          Role      @default(USER)
+  isVerified    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  
+  // JWT Stateless support
+  tokenVersion  Int       @default(0) // Để invalidate all tokens
+  
+  // Business Relations
+  posts         Post[]
+  profile       UserProfile?
+  
+  // Social Relations
+  followers     Follow[]  @relation("UserFollowers")
+  following     Follow[]  @relation("UserFollowing")
+  likes         Like[]
+  comments      Comment[]
+  saves         Save[]
+  
+  @@map("users")
+}
+
+model UserProfile {
+  id                String     @id @default(cuid())
+  userId            String     @unique
+  
+  // Personal Information (moved from User)
+  displayName       String?
+  avatar            String?
+  phone             String?
+  dateOfBirth       DateTime?
+  gender            Gender?
+  bio               String?
+  location          String?
+  website           String?
+  
+  // Health & Lifestyle preferences
+  dietaryPreferences String[]  // ["vegetarian", "vegan", "gluten-free", "keto", etc.]
+  cuisinePreferences String[]  // ["italian", "asian", "mexican", etc.]
+  cookingLevel      CookingLevel?
+  healthGoals       String[]   // ["weight-loss", "muscle-gain", "healthy-eating", etc.]
+  allergies         String[]   // ["nuts", "dairy", "gluten", etc.]
+  
+  // Social Stats
+  followersCount    Int        @default(0)
+  followingCount    Int        @default(0)
+  postsCount        Int        @default(0)
+  
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_profiles")
+}
+
+
+
+model Post {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Core fields
+  type        PostType  @default(STATUS)
+  content     Json      // Flexible JSON content
+  
+  // Extracted fields for SQL queries (duplicated from JSON for performance)
+  title       String?   // recipe.title
+  difficulty  Difficulty? // recipe.difficulty  
+  category    RecipeCategory? // recipe.category
+  tags        String[]  // recipe.tags or post tags
+  cuisine     String?   // recipe.cuisine
+  
+  // Search optimization
+  searchText  String?   // Concatenated searchable text
+  
+  // Author
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  
+  // Social features
+  published   Boolean   @default(true)
+  likes       Like[]
+  comments    Comment[]
+  saves       Save[]
+  
+  
+  @@index([type])
+  @@index([category])
+  @@index([difficulty])
+  @@index([tags])
+  @@index([cuisine])
+  @@index([searchText])
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+
+
+model Follow {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  followerId  String
+  followingId String
+  
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model Like {
+  id       String    @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId   String
+  postId   String
+  
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, postId])
+  @@map("likes")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  content   String
+  userId    String
+  postId    String
+  parentId  String?
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+  
+  @@map("comments")
+}
+
+model Save {
+  id       String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId   String
+  postId   String
+  
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post     Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, postId])
+  @@map("saves")
+}
+
+enum Role {
+  ADMIN
+  CHEF
+  USER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum CookingLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum PostType {
+  STATUS
+  RECIPE
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum RecipeCategory {
+  BREAKFAST
+  LUNCH
+  DINNER
+  DESSERT
+  SNACK
+  APPETIZER
+  MAIN_COURSE
+  SIDE_DISH
+  BEVERAGE
+  SALAD
+  SOUP
+  SAUCE
+  HEALTHY
+  VEGETARIAN
+  VEGAN
+  GLUTEN_FREE
+  KETO
+  LOW_CARB
+}
+
+
